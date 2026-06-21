@@ -1,19 +1,16 @@
-import com.github.spotbugs.snom.SpotBugsTask
 import me.modmuss50.mpp.ReleaseType
-import net.fabricmc.loom.api.RemapConfigurationSettings
 
 plugins {
     alias libs.plugins.fabric.loom
     id 'maven-publish'
     alias libs.plugins.lombok
-    alias libs.plugins.spotbugs.base
     alias libs.plugins.spotless
     alias libs.plugins.modmuss50.publish
 }
 
 def local = !System.getenv().containsKey("GITHUB_RUN_NUMBER")
 
-version = "${project.mod_version}-${project.minecraft_version}-${local ? 'local' : "build.${System.getenv("GITHUB_RUN_NUMBER")}"}"
+version = "${project.mod_version}-${project.minecraft_version}-${local ? 'SNAPSHOT' : "build.${System.getenv("GITHUB_RUN_NUMBER")}"}"
 group = project.maven_group
 
 apply from: "https://raw.githubusercontent.com/constellation-mc/artifacts/main/artifacts.groovy"
@@ -31,24 +28,6 @@ repositories {
         content { includeGroup "maven.modrinth" }
     }
     maven { url 'https://jitpack.io' }
-    maven { url 'https://maven.wispforest.io' }
-}
-
-sourceSets {
-    testmod {
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
-    }
-}
-
-loom {
-    addRemapConfiguration("testmodRemapImplementation", (RemapConfigurationSettings configuration) -> {
-        configuration.getTargetConfigurationName().convention("testmodImplementation")
-        configuration.getSourceSet().convention(sourceSets.testmod)
-        configuration.getOnCompileClasspath().convention(true)
-        configuration.getOnRuntimeClasspath().convention(true)
-        configuration.getPublishingMode().convention(RemapConfigurationSettings.PublishingMode.NONE)
-    })
 }
 
 dependencies {
@@ -56,61 +35,19 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation libs.fabric.loader
-
-    def dm = libs.dark.matter
-    [dm.base, dm.mixin, dm.minecraft, dm.enums, dm.recipe.book].each {
-        modApi it
-        include it
-    }
-
-    modImplementation libs.dark.matter.item.group
-    modCompileOnly libs.owo
-
-    testmodImplementation sourceSets.main.output
-    testmodRemapImplementation(libs.handy.tests) {
-        exclude(group: "net.fabricmc", module: "fabric-loader")
-    }
 }
 
-tasks.register("spotbugs", SpotBugsTask) { task ->
-    sourceSets.each {
-        task.sourceDirs.from(task.sourceDirs.files, it.allSource.sourceDirectories)
-        task.classDirs.from(task.classDirs.files, it.output)
-        task.auxClassPaths.from(task.auxClassPaths.files, it.compileClasspath)
-    }
-    excludeFilter = file("spotbugs.xml")
-    ignoreFailures = true
-    reports {
-        if (local) {
-            html {
-                required = true
-                outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-                stylesheet = 'fancy-hist.xsl'
-            }
-        } else {
-            sarif {
-                required = true
-                outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.sarif")
-            }
-        }
-    }
-}
-
-loom {
-    runs {
-        testClient {
-            client()
-            source sourceSets.testmod
-        }
+spotless {
+    java {
+        removeUnusedImports()
+        palantirJavaFormat('2.91.0').style("GOOGLE")
+        trimTrailingWhitespace()
+        formatAnnotations()
     }
 }
 
 loom.mods.register(project.name) {
     sourceSet project.sourceSets.main
-}
-
-loom.mods.register(project.name + "-testmod") {
-    sourceSet project.sourceSets.testmod
 }
 
 processResources {

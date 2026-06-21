@@ -1,23 +1,8 @@
-[versions]
-dark-matter = "4.0.1-1.20.1-build.76"
-
 [libraries]
-fabric-loader = { group = "net.fabricmc", name = "fabric-loader", version = "0.16.5" }
-
-dark-matter-base = { group = "me.melontini", name = "dark-matter-base", version.ref = "dark-matter" }
-dark-matter-mixin = { group = "me.melontini", name = "dark-matter-mixin", version.ref = "dark-matter" }
-dark-matter-minecraft = { group = "me.melontini", name = "dark-matter-minecraft", version.ref = "dark-matter" }
-dark-matter-enums = { group = "me.melontini", name = "dark-matter-enums", version.ref = "dark-matter" }
-dark-matter-recipe-book = { group = "me.melontini", name = "dark-matter-recipe-book", version.ref = "dark-matter" }
-dark-matter-item-group = { group = "me.melontini", name = "dark-matter-item-group", version.ref = "dark-matter" }
-
-owo = { group = "io.wispforest", name = "owo-lib", version = "0.11.2+1.20" }
-
-handy-tests = { group = "me.melontini", name = "handy-tests", version = "0.1.0-1.20.1-build.4" }
+fabric-loader = { group = "net.fabricmc", name = "fabric-loader", version = "0.19.2" }
 
 [plugins]
-fabric-loom = { id = "fabric-loom", version = "1.6.12" }
-lombok = { id = "io.freefair.lombok", version = "8.10"}
-spotbugs-base = { id = "com.github.spotbugs-base", version = "6.0.23" }
-spotless = { id = "com.diffplug.spotless", version = "6.25.0" }
-modmuss50-publish = { id = "me.modmuss50.mod-publish-plugin", version = "0.7.4" }
+fabric-loom = { id = "fabric-loom", version = "1.16.1" }
+lombok = { id = "io.freefair.lombok", version = "9.4.0"}
+spotless = { id = "com.diffplug.spotless", version = "8.4.0" }
+modmuss50-publish = { id = "me.modmuss50.mod-publish-plugin", version = "1.1.0" }
