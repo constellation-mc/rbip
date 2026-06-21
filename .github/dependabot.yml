@@ -17,9 +17,8 @@ updates:
       - gradle-plugins
       - maven-central
     ignore:
-      - dependency-name: me.melontini:dark-matter*
+      - dependency-name: dev.zenfyr:pulsar
       - dependency-name: io.wispforest:owo-lib
-      - dependency-name: me.melontini:handy-tests
     directory: /
     schedule:
       interval: weekly

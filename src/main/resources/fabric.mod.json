@@ -1,27 +1,30 @@
 {
   "schemaVersion": 1,
-  "id": "recipe-book-is-pain",
+  "id": "rbip",
   "version": "${version}",
   "name": "Recipe Book Is Pain",
   "description": "Makes the recipe book use a little more enums",
   "authors": [
-    "melontini"
+    "zenfyr"
   ],
   "contact": {
-    "sources": "https://github.com/constellation-mc/recipe_book_is_pain",
-    "issues": "https://github.com/constellation-mc/recipe_book_is_pain/issues"
+    "sources": "https://github.com/constellation-mc/rbip",
+    "issues": "https://github.com/constellation-mc/rbip/issues"
   },
   "license": "MIT",
-  "icon": "assets/recipe-book-is-pain/icon.png",
+  "icon": "assets/rbip/icon.png",
   "environment": "client",
   "entrypoints": {
+    "client": [
+      "dev.zenfyr.rbip.RecipeBookIsPain"
+    ]
   },
   "mixins": [
-    "recipe-book-is-pain.mixins.json"
+    "rbip.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "minecraft": ">=${minecraft_version}",
-    "dark-matter-base": "*"
+    "minecraft": "${minecraft_version}",
+    "fabric": ">=${fabric_version}"
   }
 }
