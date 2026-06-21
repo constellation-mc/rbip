@@ -1,9 +1,13 @@
 # Recipe Book is Pain
 
-Makes the recipe book "copy" creative tabs, making it a bit more useful in modpacks.
+[![Available on Modrinth](https://raw.githubusercontent.com/zenfyrdev/mini-badges/v1/minecraft/modrinth/available.svg)](https://modrinth.com/mod/rbip)
+[![Available on CurseForge](https://raw.githubusercontent.com/zenfyrdev/mini-badges/v1/minecraft/curseforge/available.svg)](https://www.curseforge.com/minecraft/mc-mods/rbip)
+![License MIT](https://raw.githubusercontent.com/zenfyrdev/mini-badges/v1/licenses/mit/mit.svg)
 
-Also adds Group Pages meaning you can have a lot more tabs.
+Makes the recipe book use creative tabs for groups, making it a bit more useful in modpacks.
 
-![2022-07-11_14 37 34](https://user-images.githubusercontent.com/104443436/178707733-6f4095d0-97c7-4c2a-91bc-7bcb58dfdf54.png)
+Also adds Group Pages to support a lot more tabs.
+
+![showcase of the mod](./images/showcase.webp)
 
 * screenshot of the mod working with [Better Recipe Books](https://www.curseforge.com/minecraft/mc-mods/brb)
