@@ -8,9 +8,9 @@ import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import dev.zenfyr.rbip.RecipeBookPageButton;
 import dev.zenfyr.rbip.access.ClientRecipeBookDuck;
-import dev.zenfyr.rbip.access.PaginatedRecipeBookWidget;
-import dev.zenfyr.rbip.access.PaginatedRecipeGroupButtonWidget;
-import dev.zenfyr.rbip.access.RecipeGroupButtonWidgetDuck;
+import dev.zenfyr.rbip.access.PaginatedRecipeBookTabButton;
+import dev.zenfyr.rbip.access.RecipeBookComponentWidget;
+import dev.zenfyr.rbip.access.RecipeBookTabButtonDuck;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -38,7 +38,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = RecipeBookComponent.class, priority = 1001)
-public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget {
+public abstract class RecipeBookComponentMixin implements RecipeBookComponentWidget {
 
   @Shadow
   protected Minecraft minecraft;
@@ -132,10 +132,9 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
   @Inject(at = @At("TAIL"), method = "updateCollections")
   private void dark_matter$refreshResults(boolean resetCurrentPage, CallbackInfo ci) {
     if (resetCurrentPage && this.selectedTab != null) {
-      if (this.rbip$getPage()
-          != ((PaginatedRecipeGroupButtonWidget) this.selectedTab).rbip$getPage()) {
+      if (this.rbip$getPage() != ((PaginatedRecipeBookTabButton) this.selectedTab).rbip$getPage()) {
         this.rbip$setPage(
-            Math.max(((PaginatedRecipeGroupButtonWidget) this.selectedTab).rbip$getPage(), 0));
+            Math.max(((PaginatedRecipeBookTabButton) this.selectedTab).rbip$getPage(), 0));
       }
     }
   }
@@ -186,7 +185,7 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
       @Local RecipeBookTabButton widget,
       @Share("index") LocalIntRef index,
       @Share("wc") LocalIntRef wc) {
-    ((PaginatedRecipeGroupButtonWidget) widget).rbip$setPage((int) Math.floor(wc.get() / 6f));
+    ((PaginatedRecipeBookTabButton) widget).rbip$setPage((int) Math.floor(wc.get() / 6f));
     if (index.get() == 6) index.set(0);
     wc.set(wc.get() + 1);
   }
@@ -209,7 +208,7 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
   @Unique @Override
   public void rbip$updatePages() {
     for (RecipeBookTabButton widget : this.tabButtons) {
-      widget.visible = ((PaginatedRecipeGroupButtonWidget) widget).rbip$getPage() == this.rbip$page;
+      widget.visible = ((PaginatedRecipeBookTabButton) widget).rbip$getPage() == this.rbip$page;
     }
   }
 
@@ -265,7 +264,7 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
         .filter(itemGroup -> !itemGroup.isAlignedRight())
         .forEach(itemGroup -> {
           var widget = new RecipeBookTabButton(RecipeBookCategories.CRAFTING_MISC);
-          ((RecipeGroupButtonWidgetDuck) widget).rbip$setRealItemGroup(itemGroup);
+          ((RecipeBookTabButtonDuck) widget).rbip$setCreativeTab(itemGroup);
           this.tabButtons.add(widget);
         });
   }
@@ -281,11 +280,11 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
       Object o,
       Operation<Boolean> original,
       @Local(argsOnly = true) RecipeBookTabButton widget) {
-    if (((RecipeGroupButtonWidgetDuck) widget).rbip$getRealItemGroup() != null
+    if (((RecipeBookTabButtonDuck) widget).rbip$getCreativeTab() != null
         && this.selectedTab != null) {
       return Objects.equals(
-          ((RecipeGroupButtonWidgetDuck) widget).rbip$getRealItemGroup(),
-          ((RecipeGroupButtonWidgetDuck) this.selectedTab).rbip$getRealItemGroup());
+          ((RecipeBookTabButtonDuck) widget).rbip$getCreativeTab(),
+          ((RecipeBookTabButtonDuck) this.selectedTab).rbip$getCreativeTab());
     }
     return original.call(instance, o);
   }
@@ -309,9 +308,9 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
                   "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
       method = "updateCollections")
   private List<RecipeCollection> refreshResults(List<RecipeCollection> original) {
-    var real = ((RecipeGroupButtonWidgetDuck) this.selectedTab).rbip$getRealItemGroup();
+    var real = ((RecipeBookTabButtonDuck) this.selectedTab).rbip$getCreativeTab();
     if (real != null) {
-      return ((ClientRecipeBookDuck) this.book).rbip$getResultsForGroup(real);
+      return ((ClientRecipeBookDuck) this.book).rbip$getCollectionForTab(real);
     }
     return original;
   }
@@ -335,7 +334,7 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
             context.renderTooltip(
                 minecraft.font, CreativeModeTabs.searchTab().getDisplayName(), mouseX, mouseY);
           } else {
-            Optional.ofNullable(((RecipeGroupButtonWidgetDuck) widget).rbip$getRealItemGroup())
+            Optional.ofNullable(((RecipeBookTabButtonDuck) widget).rbip$getCreativeTab())
                 .map(CreativeModeTab::getDisplayName)
                 .ifPresent(text -> context.renderTooltip(minecraft.font, text, mouseX, mouseY));
           }

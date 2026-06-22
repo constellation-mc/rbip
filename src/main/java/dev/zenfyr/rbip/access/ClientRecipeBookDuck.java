@@ -6,5 +6,5 @@ import net.minecraft.world.item.CreativeModeTab;
 
 public interface ClientRecipeBookDuck {
 
-  List<RecipeCollection> rbip$getResultsForGroup(CreativeModeTab group);
+  List<RecipeCollection> rbip$getCollectionForTab(CreativeModeTab tab);
 }

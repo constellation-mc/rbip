@@ -4,8 +4,8 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.zenfyr.rbip.RecipeBookIsPain;
 import dev.zenfyr.rbip.access.ClientRecipeBookDuck;
-import dev.zenfyr.rbip.access.PaginatedRecipeGroupButtonWidget;
-import dev.zenfyr.rbip.access.RecipeGroupButtonWidgetDuck;
+import dev.zenfyr.rbip.access.PaginatedRecipeBookTabButton;
+import dev.zenfyr.rbip.access.RecipeBookTabButtonDuck;
 import dev.zenfyr.rbip.compat.OwOCompat;
 import dev.zenfyr.rbip.compat.PulsarCompat;
 import java.util.List;
@@ -24,16 +24,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(RecipeBookTabButton.class)
-public abstract class RecipeGroupButtonMixin extends StateSwitchingButton
-    implements RecipeGroupButtonWidgetDuck, PaginatedRecipeGroupButtonWidget {
+public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton
+    implements RecipeBookTabButtonDuck, PaginatedRecipeBookTabButton {
 
-  public RecipeGroupButtonMixin(int x, int y, int width, int height, boolean toggled) {
+  public RecipeBookTabButtonMixin(int x, int y, int width, int height, boolean toggled) {
     super(x, y, width, height, toggled);
   }
 
   @Unique private int rbip$page = -1;
 
-  @Unique private CreativeModeTab rbip$realGroup;
+  @Unique private CreativeModeTab rbip$creativeTab;
 
   @Override
   public int rbip$getPage() {
@@ -46,13 +46,13 @@ public abstract class RecipeGroupButtonMixin extends StateSwitchingButton
   }
 
   @Override
-  public void rbip$setRealItemGroup(CreativeModeTab group) {
-    this.rbip$realGroup = group;
+  public void rbip$setCreativeTab(CreativeModeTab tab) {
+    this.rbip$creativeTab = tab;
   }
 
   @Override
-  public CreativeModeTab rbip$getRealItemGroup() {
-    return this.rbip$realGroup;
+  public CreativeModeTab rbip$getCreativeTab() {
+    return this.rbip$creativeTab;
   }
 
   @ModifyExpressionValue(
@@ -64,8 +64,8 @@ public abstract class RecipeGroupButtonMixin extends StateSwitchingButton
       method = "startAnimation")
   private List<RecipeCollection> checkForNewRecipes(
       List<RecipeCollection> original, @Local ClientRecipeBook recipeBook) {
-    if (this.rbip$realGroup != null) {
-      return ((ClientRecipeBookDuck) recipeBook).rbip$getResultsForGroup(this.rbip$realGroup);
+    if (this.rbip$creativeTab != null) {
+      return ((ClientRecipeBookDuck) recipeBook).rbip$getCollectionForTab(this.rbip$creativeTab);
     }
     return original;
   }
@@ -79,33 +79,33 @@ public abstract class RecipeGroupButtonMixin extends StateSwitchingButton
       method = "updateVisibility")
   private List<RecipeCollection> hasKnownRecipes(
       List<RecipeCollection> original, @Local(argsOnly = true) ClientRecipeBook recipeBook) {
-    if (this.rbip$realGroup != null) {
-      return ((ClientRecipeBookDuck) recipeBook).rbip$getResultsForGroup(this.rbip$realGroup);
+    if (this.rbip$creativeTab != null) {
+      return ((ClientRecipeBookDuck) recipeBook).rbip$getCollectionForTab(this.rbip$creativeTab);
     }
     return original;
   }
 
   @Inject(at = @At("HEAD"), method = "renderIcon", cancellable = true)
   private void rbip$render(GuiGraphics context, ItemRenderer itemRenderer, CallbackInfo ci) {
-    if (this.rbip$realGroup == null) return;
+    if (this.rbip$creativeTab == null) return;
 
     int i = this.isStateTriggered ? -2 : 0;
 
     if (RecipeBookIsPain.isOwOLoaded) {
-      if (OwOCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$realGroup)) {
+      if (OwOCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$creativeTab)) {
         ci.cancel();
         return;
       }
     }
 
     if (RecipeBookIsPain.isPulsarLoaded) {
-      if (PulsarCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$realGroup)) {
+      if (PulsarCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$creativeTab)) {
         ci.cancel();
         return;
       }
     }
 
-    ItemStack icon = this.rbip$realGroup.getIconItem();
+    ItemStack icon = this.rbip$creativeTab.getIconItem();
     if (!icon.isEmpty()) context.renderFakeItem(icon, this.getX() + 9 + i, this.getY() + 5);
     ci.cancel();
   }

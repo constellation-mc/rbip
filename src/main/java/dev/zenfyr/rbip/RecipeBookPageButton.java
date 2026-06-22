@@ -1,7 +1,7 @@
 package dev.zenfyr.rbip;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.zenfyr.rbip.access.PaginatedRecipeBookWidget;
+import dev.zenfyr.rbip.access.RecipeBookComponentWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -60,8 +60,8 @@ public class RecipeBookPageButton extends Button {
       if (this.isHovered && Minecraft.getInstance().screen != null) {
         context.renderTooltip(
             Minecraft.getInstance().font,
-            Component.literal(((PaginatedRecipeBookWidget) widget).rbip$getPage() + 1 + "/"
-                + ((PaginatedRecipeBookWidget) widget).rbip$getPageCount()),
+            Component.literal(((RecipeBookComponentWidget) widget).rbip$getPage() + 1 + "/"
+                + ((RecipeBookComponentWidget) widget).rbip$getPageCount()),
             mouseX,
             mouseY);
       }

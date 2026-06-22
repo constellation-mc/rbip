@@ -7,8 +7,8 @@
   ],
   "client": [
     "ClientRecipeBookMixin",
-    "RecipeBookWidgetMixin",
-    "RecipeGroupButtonMixin"
+    "RecipeBookComponentMixin",
+    "RecipeBookTabButtonMixin"
   ],
   "injectors": {
     "defaultRequire": 1
