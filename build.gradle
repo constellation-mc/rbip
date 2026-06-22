@@ -141,7 +141,6 @@ publishMods {
         minecraftVersions.add("${project.minecraft_version}")
 
         requires("fabric-api")
-        embeds("dark-matter")
     }
     curseforge {
         projectId = "643246"
@@ -149,7 +148,6 @@ publishMods {
         minecraftVersions.add("${project.minecraft_version}")
 
         requires("fabric-api")
-        embeds("dark-matter")
     }
     github {
         repository = "constellation-mc/rbip"
