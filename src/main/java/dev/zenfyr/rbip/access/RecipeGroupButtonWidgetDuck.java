@@ -1,10 +1,10 @@
 package dev.zenfyr.rbip.access;
 
-import net.minecraft.item.ItemGroup;
+import net.minecraft.world.item.CreativeModeTab;
 
 public interface RecipeGroupButtonWidgetDuck {
 
-  void rbip$setRealItemGroup(ItemGroup group);
+  void rbip$setRealItemGroup(CreativeModeTab group);
 
-  ItemGroup rbip$getRealItemGroup();
+  CreativeModeTab rbip$getRealItemGroup();
 }

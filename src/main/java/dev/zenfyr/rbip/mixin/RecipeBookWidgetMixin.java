@@ -14,18 +14,18 @@ import dev.zenfyr.rbip.access.RecipeGroupButtonWidgetDuck;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
-import net.minecraft.client.gui.screen.recipebook.RecipeGroupButtonWidget;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.client.recipebook.ClientRecipeBook;
-import net.minecraft.client.recipebook.RecipeBookGroup;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.recipe.book.RecipeBookCategory;
-import net.minecraft.registry.Registries;
-import net.minecraft.screen.AbstractRecipeScreenHandler;
+import net.minecraft.client.ClientRecipeBook;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.RecipeBookCategories;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.inventory.RecipeBookMenu;
+import net.minecraft.world.inventory.RecipeBookType;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,43 +37,44 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = RecipeBookWidget.class, priority = 1001)
+@Mixin(value = RecipeBookComponent.class, priority = 1001)
 public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget {
+
   @Shadow
-  protected MinecraftClient client;
+  protected Minecraft minecraft;
 
   @Shadow
   @Final
-  private List<RecipeGroupButtonWidget> tabButtons;
+  private List<RecipeBookTabButton> tabButtons;
 
   @Shadow
-  protected AbstractRecipeScreenHandler<?> craftingScreenHandler;
+  protected RecipeBookMenu<?> menu;
 
   @Shadow
-  private int parentWidth;
+  private int width;
 
   @Shadow
-  private int parentHeight;
+  private int height;
 
   @Shadow
-  private int leftOffset;
+  private int xOffset;
 
   @Shadow
-  public abstract boolean isOpen();
-
-  @Shadow
-  @Final
-  public static int field_32408;
+  public abstract boolean isVisible();
 
   @Shadow
   @Final
-  public static int field_32409;
+  public static int IMAGE_WIDTH;
 
   @Shadow
-  @Nullable private RecipeGroupButtonWidget currentTab;
+  @Final
+  public static int IMAGE_HEIGHT;
 
   @Shadow
-  private ClientRecipeBook recipeBook;
+  @Nullable private RecipeBookTabButton selectedTab;
+
+  @Shadow
+  private ClientRecipeBook book;
 
   @Unique private int rbip$page = 0;
 
@@ -88,27 +89,27 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/screen/recipebook/RecipeGroupButtonWidget;setToggled(Z)V",
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookTabButton;setStateTriggered(Z)V",
               shift = At.Shift.BEFORE),
-      method = "reset")
+      method = "initVisuals")
   private void dark_matter$reset(CallbackInfo ci) {
-    int a = (this.parentWidth - rbip$horizontalOffset()) / 2 - this.leftOffset;
-    int s = (this.parentHeight - rbip$verticalOffset()) / 2;
+    int a = (this.width - rbip$horizontalOffset()) / 2 - this.xOffset;
+    int s = (this.height - rbip$verticalOffset()) / 2;
     this.rbip$nextPageButton =
-        new RecipeBookPageButton(a + 18, s - 13, (RecipeBookWidget) (Object) this, true);
+        new RecipeBookPageButton(a + 18, s - 13, (RecipeBookComponent) (Object) this, true);
     this.rbip$prevPageButton =
-        new RecipeBookPageButton(a + 3, s - 13, (RecipeBookWidget) (Object) this, false);
+        new RecipeBookPageButton(a + 3, s - 13, (RecipeBookComponent) (Object) this, false);
   }
 
   @Inject(
       at =
           @At(
               value = "INVOKE",
-              target = "Lnet/minecraft/client/util/math/MatrixStack;pop()V",
+              target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V",
               shift = At.Shift.BEFORE),
       method = "render")
   private void dark_matter$render(
-      DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+      GuiGraphics context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
     this.rbip$prevPageButton.render(context, mouseX, mouseY, delta);
     this.rbip$nextPageButton.render(context, mouseX, mouseY, delta);
   }
@@ -116,8 +117,8 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
   @Inject(at = @At("HEAD"), method = "mouseClicked", cancellable = true)
   private void dark_matter$mouseClicked(
       double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-    if (this.client.player != null)
-      if (this.isOpen() && !this.client.player.isSpectator()) {
+    if (this.minecraft.player != null)
+      if (this.isVisible() && !this.minecraft.player.isSpectator()) {
         if (this.rbip$nextPageButton.mouseClicked(mouseX, mouseY, button)) {
           this.rbip$incrementPage();
           cir.setReturnValue(true);
@@ -128,13 +129,13 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
       }
   }
 
-  @Inject(at = @At("TAIL"), method = "refreshResults")
+  @Inject(at = @At("TAIL"), method = "updateCollections")
   private void dark_matter$refreshResults(boolean resetCurrentPage, CallbackInfo ci) {
-    if (resetCurrentPage && this.currentTab != null) {
+    if (resetCurrentPage && this.selectedTab != null) {
       if (this.rbip$getPage()
-          != ((PaginatedRecipeGroupButtonWidget) this.currentTab).rbip$getPage()) {
+          != ((PaginatedRecipeGroupButtonWidget) this.selectedTab).rbip$getPage()) {
         this.rbip$setPage(
-            Math.max(((PaginatedRecipeGroupButtonWidget) this.currentTab).rbip$getPage(), 0));
+            Math.max(((PaginatedRecipeGroupButtonWidget) this.selectedTab).rbip$getPage(), 0));
       }
     }
   }
@@ -144,12 +145,12 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
           @At(
               value = "FIELD",
               target =
-                  "Lnet/minecraft/client/recipebook/RecipeBookGroup;CRAFTING_SEARCH:Lnet/minecraft/client/recipebook/RecipeBookGroup;"),
-      method = "refreshTabButtons",
+                  "Lnet/minecraft/client/RecipeBookCategories;CRAFTING_SEARCH:Lnet/minecraft/client/RecipeBookCategories;"),
+      method = "updateTabs",
       require = 0)
-  private RecipeBookGroup dark_matter$refresh$correctGroup(
-      RecipeBookGroup group, @Local RecipeGroupButtonWidget widget) {
-    return RecipeBookGroup.SEARCH_MAP.containsKey(widget.getCategory())
+  private RecipeBookCategories dark_matter$refresh$correctGroup(
+      RecipeBookCategories group, @Local RecipeBookTabButton widget) {
+    return RecipeBookCategories.AGGREGATE_CATEGORIES.containsKey(widget.getCategory())
         ? widget.getCategory()
         : group;
   }
@@ -159,12 +160,12 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/screen/recipebook/RecipeGroupButtonWidget;setPosition(II)V"),
-      method = "refreshTabButtons",
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookTabButton;setPosition(II)V"),
+      method = "updateTabs",
       index = 1)
   private int dark_matter$refresh$setPos(
       int y,
-      @Local RecipeGroupButtonWidget widget,
+      @Local RecipeBookTabButton widget,
       @Local(ordinal = 1) int j,
       @Share("index") LocalIntRef index) {
     int pos = j + widget.getHeight() * index.get();
@@ -177,12 +178,12 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/screen/recipebook/RecipeGroupButtonWidget;setPosition(II)V",
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookTabButton;setPosition(II)V",
               shift = At.Shift.AFTER),
-      method = "refreshTabButtons")
+      method = "updateTabs")
   private void dark_matter$refresh$setPos(
       CallbackInfo ci,
-      @Local RecipeGroupButtonWidget widget,
+      @Local RecipeBookTabButton widget,
       @Share("index") LocalIntRef index,
       @Share("wc") LocalIntRef wc) {
     ((PaginatedRecipeGroupButtonWidget) widget).rbip$setPage((int) Math.floor(wc.get() / 6f));
@@ -190,7 +191,7 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
     wc.set(wc.get() + 1);
   }
 
-  @Inject(at = @At("TAIL"), method = "refreshTabButtons")
+  @Inject(at = @At("TAIL"), method = "updateTabs")
   private void dark_matter$refresh$tail(CallbackInfo ci, @Share("wc") LocalIntRef wc) {
     this.rbip$pages = (int) Math.ceil(wc.get() / 6f);
     this.rbip$updatePages();
@@ -198,16 +199,16 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
   }
 
   @Unique private static int rbip$horizontalOffset() {
-    return field_32408;
+    return IMAGE_WIDTH;
   }
 
   @Unique private static int rbip$verticalOffset() {
-    return field_32409;
+    return IMAGE_HEIGHT;
   }
 
   @Unique @Override
   public void rbip$updatePages() {
-    for (RecipeGroupButtonWidget widget : this.tabButtons) {
+    for (RecipeBookTabButton widget : this.tabButtons) {
       widget.visible = ((PaginatedRecipeGroupButtonWidget) widget).rbip$getPage() == this.rbip$page;
     }
   }
@@ -250,20 +251,20 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
 
   @Inject(
       at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER),
-      method = "reset")
+      method = "initVisuals")
   private void init(CallbackInfo ci) {
-    if (this.craftingScreenHandler.getCategory() != RecipeBookCategory.CRAFTING) return;
+    if (this.menu.getRecipeBookType() != RecipeBookType.CRAFTING) return;
 
-    var search = RecipeBookGroup.getGroups(this.craftingScreenHandler.getCategory()).stream()
-        .filter(RecipeBookGroup.SEARCH_MAP::containsKey)
+    var search = RecipeBookCategories.getCategories(this.menu.getRecipeBookType()).stream()
+        .filter(RecipeBookCategories.AGGREGATE_CATEGORIES::containsKey)
         .findFirst();
     search.ifPresent(
-        recipeBookGroup -> this.tabButtons.add(new RecipeGroupButtonWidget(recipeBookGroup)));
+        recipeBookGroup -> this.tabButtons.add(new RecipeBookTabButton(recipeBookGroup)));
 
-    Registries.ITEM_GROUP.stream()
-        .filter(itemGroup -> !itemGroup.isSpecial())
+    BuiltInRegistries.CREATIVE_MODE_TAB.stream()
+        .filter(itemGroup -> !itemGroup.isAlignedRight())
         .forEach(itemGroup -> {
-          var widget = new RecipeGroupButtonWidget(RecipeBookGroup.CRAFTING_MISC);
+          var widget = new RecipeBookTabButton(RecipeBookCategories.CRAFTING_MISC);
           ((RecipeGroupButtonWidgetDuck) widget).rbip$setRealItemGroup(itemGroup);
           this.tabButtons.add(widget);
         });
@@ -273,19 +274,18 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
       at =
           @At(
               value = "INVOKE",
-              target =
-                  "Lnet/minecraft/client/recipebook/RecipeBookGroup;equals(Ljava/lang/Object;)Z"),
+              target = "Lnet/minecraft/client/RecipeBookCategories;equals(Ljava/lang/Object;)Z"),
       method = "method_2582")
   private boolean checkTabInEquals(
-      RecipeBookGroup instance,
+      RecipeBookCategories instance,
       Object o,
       Operation<Boolean> original,
-      @Local(argsOnly = true) RecipeGroupButtonWidget widget) {
+      @Local(argsOnly = true) RecipeBookTabButton widget) {
     if (((RecipeGroupButtonWidgetDuck) widget).rbip$getRealItemGroup() != null
-        && this.currentTab != null) {
+        && this.selectedTab != null) {
       return Objects.equals(
           ((RecipeGroupButtonWidgetDuck) widget).rbip$getRealItemGroup(),
-          ((RecipeGroupButtonWidgetDuck) this.currentTab).rbip$getRealItemGroup());
+          ((RecipeGroupButtonWidgetDuck) this.selectedTab).rbip$getRealItemGroup());
     }
     return original.call(instance, o);
   }
@@ -295,12 +295,10 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/recipebook/RecipeBookGroup;getGroups(Lnet/minecraft/recipe/book/RecipeBookCategory;)Ljava/util/List;"),
-      method = "reset")
-  private List<RecipeBookGroup> skipRealButtons(List<RecipeBookGroup> original) {
-    return this.craftingScreenHandler.getCategory() == RecipeBookCategory.CRAFTING
-        ? List.of()
-        : original;
+                  "Lnet/minecraft/client/RecipeBookCategories;getCategories(Lnet/minecraft/world/inventory/RecipeBookType;)Ljava/util/List;"),
+      method = "initVisuals")
+  private List<RecipeBookCategories> skipRealButtons(List<RecipeBookCategories> original) {
+    return this.menu.getRecipeBookType() == RecipeBookType.CRAFTING ? List.of() : original;
   }
 
   @ModifyExpressionValue(
@@ -308,12 +306,12 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/recipebook/ClientRecipeBook;getResultsForGroup(Lnet/minecraft/client/recipebook/RecipeBookGroup;)Ljava/util/List;"),
-      method = "refreshResults")
-  private List<RecipeResultCollection> refreshResults(List<RecipeResultCollection> original) {
-    var real = ((RecipeGroupButtonWidgetDuck) this.currentTab).rbip$getRealItemGroup();
+                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
+      method = "updateCollections")
+  private List<RecipeCollection> refreshResults(List<RecipeCollection> original) {
+    var real = ((RecipeGroupButtonWidgetDuck) this.selectedTab).rbip$getRealItemGroup();
     if (real != null) {
-      return ((ClientRecipeBookDuck) this.recipeBook).rbip$getResultsForGroup(real);
+      return ((ClientRecipeBookDuck) this.book).rbip$getResultsForGroup(real);
     }
     return original;
   }
@@ -322,24 +320,24 @@ public abstract class RecipeBookWidgetMixin implements PaginatedRecipeBookWidget
       at =
           @At(
               value = "INVOKE",
-              target = "Lnet/minecraft/client/util/math/MatrixStack;pop()V",
+              target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V",
               shift = At.Shift.BEFORE),
       method = "render")
   private void rbip$renderTooltip(
-      DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-    if (client.currentScreen == null) return;
-    if (this.craftingScreenHandler.getCategory() != RecipeBookCategory.CRAFTING) return;
+      GuiGraphics context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+    if (minecraft.screen == null) return;
+    if (this.menu.getRecipeBookType() != RecipeBookType.CRAFTING) return;
 
     this.tabButtons.stream()
         .filter(widget -> widget.visible && widget.isHovered())
         .forEach(widget -> {
-          if (RecipeBookGroup.SEARCH_MAP.containsKey(widget.getCategory())) {
-            context.drawTooltip(
-                client.textRenderer, ItemGroups.getSearchGroup().getDisplayName(), mouseX, mouseY);
+          if (RecipeBookCategories.AGGREGATE_CATEGORIES.containsKey(widget.getCategory())) {
+            context.renderTooltip(
+                minecraft.font, CreativeModeTabs.searchTab().getDisplayName(), mouseX, mouseY);
           } else {
             Optional.ofNullable(((RecipeGroupButtonWidgetDuck) widget).rbip$getRealItemGroup())
-                .map(ItemGroup::getDisplayName)
-                .ifPresent(text -> context.drawTooltip(client.textRenderer, text, mouseX, mouseY));
+                .map(CreativeModeTab::getDisplayName)
+                .ifPresent(text -> context.renderTooltip(minecraft.font, text, mouseX, mouseY));
           }
         });
   }

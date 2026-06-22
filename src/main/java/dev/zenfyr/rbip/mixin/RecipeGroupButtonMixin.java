@@ -9,22 +9,22 @@ import dev.zenfyr.rbip.access.RecipeGroupButtonWidgetDuck;
 import dev.zenfyr.rbip.compat.OwOCompat;
 import dev.zenfyr.rbip.compat.PulsarCompat;
 import java.util.List;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.recipebook.RecipeGroupButtonWidget;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.client.gui.widget.ToggleButtonWidget;
-import net.minecraft.client.recipebook.ClientRecipeBook;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.ClientRecipeBook;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.StateSwitchingButton;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(RecipeGroupButtonWidget.class)
-public abstract class RecipeGroupButtonMixin extends ToggleButtonWidget
+@Mixin(RecipeBookTabButton.class)
+public abstract class RecipeGroupButtonMixin extends StateSwitchingButton
     implements RecipeGroupButtonWidgetDuck, PaginatedRecipeGroupButtonWidget {
 
   public RecipeGroupButtonMixin(int x, int y, int width, int height, boolean toggled) {
@@ -33,7 +33,7 @@ public abstract class RecipeGroupButtonMixin extends ToggleButtonWidget
 
   @Unique private int rbip$page = -1;
 
-  @Unique private ItemGroup rbip$realGroup;
+  @Unique private CreativeModeTab rbip$realGroup;
 
   @Override
   public int rbip$getPage() {
@@ -46,12 +46,12 @@ public abstract class RecipeGroupButtonMixin extends ToggleButtonWidget
   }
 
   @Override
-  public void rbip$setRealItemGroup(ItemGroup group) {
+  public void rbip$setRealItemGroup(CreativeModeTab group) {
     this.rbip$realGroup = group;
   }
 
   @Override
-  public ItemGroup rbip$getRealItemGroup() {
+  public CreativeModeTab rbip$getRealItemGroup() {
     return this.rbip$realGroup;
   }
 
@@ -60,10 +60,10 @@ public abstract class RecipeGroupButtonMixin extends ToggleButtonWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/recipebook/ClientRecipeBook;getResultsForGroup(Lnet/minecraft/client/recipebook/RecipeBookGroup;)Ljava/util/List;"),
-      method = "checkForNewRecipes")
-  private List<RecipeResultCollection> checkForNewRecipes(
-      List<RecipeResultCollection> original, @Local ClientRecipeBook recipeBook) {
+                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
+      method = "startAnimation")
+  private List<RecipeCollection> checkForNewRecipes(
+      List<RecipeCollection> original, @Local ClientRecipeBook recipeBook) {
     if (this.rbip$realGroup != null) {
       return ((ClientRecipeBookDuck) recipeBook).rbip$getResultsForGroup(this.rbip$realGroup);
     }
@@ -75,39 +75,38 @@ public abstract class RecipeGroupButtonMixin extends ToggleButtonWidget
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/recipebook/ClientRecipeBook;getResultsForGroup(Lnet/minecraft/client/recipebook/RecipeBookGroup;)Ljava/util/List;"),
-      method = "hasKnownRecipes")
-  private List<RecipeResultCollection> hasKnownRecipes(
-      List<RecipeResultCollection> original, @Local(argsOnly = true) ClientRecipeBook recipeBook) {
+                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
+      method = "updateVisibility")
+  private List<RecipeCollection> hasKnownRecipes(
+      List<RecipeCollection> original, @Local(argsOnly = true) ClientRecipeBook recipeBook) {
     if (this.rbip$realGroup != null) {
       return ((ClientRecipeBookDuck) recipeBook).rbip$getResultsForGroup(this.rbip$realGroup);
     }
     return original;
   }
 
-  @Inject(at = @At("HEAD"), method = "renderIcons", cancellable = true)
-  private void rbip$render(DrawContext context, ItemRenderer itemRenderer, CallbackInfo ci) {
+  @Inject(at = @At("HEAD"), method = "renderIcon", cancellable = true)
+  private void rbip$render(GuiGraphics context, ItemRenderer itemRenderer, CallbackInfo ci) {
     if (this.rbip$realGroup == null) return;
 
-    int i = this.toggled ? -2 : 0;
+    int i = this.isStateTriggered ? -2 : 0;
 
     if (RecipeBookIsPain.isOwOLoaded) {
-      if (OwOCompat.render(context, i, (RecipeGroupButtonWidget) (Object) this, rbip$realGroup)) {
+      if (OwOCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$realGroup)) {
         ci.cancel();
         return;
       }
     }
 
     if (RecipeBookIsPain.isPulsarLoaded) {
-      if (PulsarCompat.render(
-          context, i, (RecipeGroupButtonWidget) (Object) this, rbip$realGroup)) {
+      if (PulsarCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$realGroup)) {
         ci.cancel();
         return;
       }
     }
 
-    ItemStack icon = this.rbip$realGroup.getIcon();
-    if (!icon.isEmpty()) context.drawItemWithoutEntity(icon, this.getX() + 9 + i, this.getY() + 5);
+    ItemStack icon = this.rbip$realGroup.getIconItem();
+    if (!icon.isEmpty()) context.renderFakeItem(icon, this.getX() + 9 + i, this.getY() + 5);
     ci.cancel();
   }
 }

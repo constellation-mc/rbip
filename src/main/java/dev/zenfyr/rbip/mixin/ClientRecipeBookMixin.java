@@ -3,18 +3,18 @@ package dev.zenfyr.rbip.mixin;
 import com.google.common.collect.*;
 import dev.zenfyr.rbip.access.ClientRecipeBookDuck;
 import java.util.*;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.client.recipebook.ClientRecipeBook;
-import net.minecraft.client.recipebook.RecipeBookGroup;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.client.ClientRecipeBook;
+import net.minecraft.client.RecipeBookCategories;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,36 +27,36 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ClientRecipeBookMixin implements ClientRecipeBookDuck {
 
   @Shadow
-  private List<RecipeResultCollection> orderedResults;
+  private List<RecipeCollection> allCollections;
 
-  @Unique private final Map<ItemGroup, List<RecipeResultCollection>> rbip$groupedRecipes = new HashMap<>();
+  @Unique private final Map<CreativeModeTab, List<RecipeCollection>> rbip$groupedRecipes = new HashMap<>();
 
-  @Inject(at = @At("TAIL"), method = "reload")
-  private void rbip$reload(
-      Iterable<Recipe<?>> recipes, DynamicRegistryManager manager, CallbackInfo ci) {
-    ItemGroups.updateDisplayContext(FeatureFlags.FEATURE_MANAGER.getFeatureSet(), false, manager);
+  @Inject(at = @At("TAIL"), method = "setupCollections")
+  private void rbip$reload(Iterable<Recipe<?>> recipes, RegistryAccess manager, CallbackInfo ci) {
+    CreativeModeTabs.tryRebuildTabContents(FeatureFlags.REGISTRY.allFlags(), false, manager);
 
-    Map<Item, ItemGroup> groups = new HashMap<>();
-    Registries.ITEM_GROUP.stream()
-        .filter(itemGroup -> !itemGroup.isSpecial())
+    Map<Item, CreativeModeTab> groups = new HashMap<>();
+    BuiltInRegistries.CREATIVE_MODE_TAB.stream()
+        .filter(itemGroup -> !itemGroup.isAlignedRight())
         .forEach(itemGroup -> {
-          for (ItemStack stack : itemGroup.getSearchTabStacks()) {
+          for (ItemStack stack : itemGroup.getSearchTabDisplayItems()) {
             if (groups.containsKey(stack.getItem())) continue;
             groups.put(stack.getItem(), itemGroup);
           }
         });
 
-    Map<ItemGroup, List<RecipeResultCollection>> map2 = new HashMap<>();
+    Map<CreativeModeTab, List<RecipeCollection>> map2 = new HashMap<>();
 
-    this.orderedResults.forEach(collection -> {
-      for (Recipe<?> recipe : collection.getAllRecipes()) {
+    this.allCollections.forEach(collection -> {
+      for (Recipe<?> recipe : collection.getRecipes()) {
         if (!RecipeType.CRAFTING.equals(recipe.getType())) return;
-        if (recipe.isIgnoredInRecipeBook() || recipe.isEmpty()) return;
+        if (recipe.isSpecial() || recipe.isIncomplete()) return;
 
-        ItemStack output = recipe.getOutput(manager);
+        ItemStack output = recipe.getResultItem(manager);
         if (output.isEmpty()) continue;
 
-        ItemGroup itemGroup = groups.getOrDefault(output.getItem(), ItemGroups.getDefaultTab());
+        CreativeModeTab itemGroup =
+            groups.getOrDefault(output.getItem(), CreativeModeTabs.getDefaultTab());
         map2.computeIfAbsent(itemGroup, g -> new ArrayList<>()).add(collection);
         return;
       }
@@ -66,16 +66,16 @@ public class ClientRecipeBookMixin implements ClientRecipeBookDuck {
     this.rbip$groupedRecipes.putAll(map2);
   }
 
-  @Inject(at = @At("HEAD"), method = "getGroupForRecipe", cancellable = true)
+  @Inject(at = @At("HEAD"), method = "getCategory", cancellable = true)
   private static void rbip$getGroupForRecipe(
-      Recipe<?> recipe, CallbackInfoReturnable<RecipeBookGroup> cir) {
+      Recipe<?> recipe, CallbackInfoReturnable<RecipeBookCategories> cir) {
     if (RecipeType.CRAFTING.equals(recipe.getType())) {
-      cir.setReturnValue(RecipeBookGroup.CRAFTING_MISC);
+      cir.setReturnValue(RecipeBookCategories.CRAFTING_MISC);
     }
   }
 
   @Override
-  public List<RecipeResultCollection> rbip$getResultsForGroup(ItemGroup group) {
+  public List<RecipeCollection> rbip$getResultsForGroup(CreativeModeTab group) {
     return this.rbip$groupedRecipes.getOrDefault(group, List.of());
   }
 }

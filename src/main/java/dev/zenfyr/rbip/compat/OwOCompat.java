@@ -5,10 +5,10 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import lombok.SneakyThrows;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.recipebook.RecipeGroupButtonWidget;
-import net.minecraft.item.ItemGroup;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
+import net.minecraft.world.item.CreativeModeTab;
 
 public class OwOCompat {
 
@@ -18,16 +18,16 @@ public class OwOCompat {
 
   @SneakyThrows
   public static boolean render(
-      DrawContext context, int i, RecipeGroupButtonWidget widget, ItemGroup group) {
+      GuiGraphics context, int i, RecipeBookTabButton widget, CreativeModeTab group) {
     if (groupClass == null || iconHandle == null || renderHandle == null) return false;
     if (!groupClass.isInstance(group)) return false;
 
-    MinecraftClient client = MinecraftClient.getInstance();
-    double e = client.mouse.getX()
-        * client.getWindow().getScaledWidth()
+    Minecraft client = Minecraft.getInstance();
+    double e = client.mouseHandler.xpos()
+        * client.getWindow().getGuiScaledWidth()
         / client.getWindow().getWidth();
-    double f = client.mouse.getY()
-        * client.getWindow().getScaledHeight()
+    double f = client.mouseHandler.ypos()
+        * client.getWindow().getScreenHeight()
         / client.getWindow().getHeight();
     var icon = iconHandle.invoke(group);
     renderHandle.invoke(
@@ -37,7 +37,7 @@ public class OwOCompat {
         widget.getY() + 5,
         (int) e,
         (int) f,
-        client.getTickDelta());
+        client.getDeltaFrameTime());
     return true;
   }
 
@@ -52,7 +52,7 @@ public class OwOCompat {
           "render",
           MethodType.methodType(
               void.class,
-              DrawContext.class,
+              GuiGraphics.class,
               int.class,
               int.class,
               int.class,
