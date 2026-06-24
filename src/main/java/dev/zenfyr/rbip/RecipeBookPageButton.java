@@ -2,7 +2,7 @@ package dev.zenfyr.rbip;
 
 import dev.zenfyr.rbip.access.RecipeBookComponentWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -31,7 +31,8 @@ public class RecipeBookPageButton extends Button {
   }
 
   @Override
-  protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
+  protected void extractContents(
+      GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
     this.isHovered = mouseX >= this.getX()
         && mouseY >= this.getY()
         && mouseX < this.getX() + this.width

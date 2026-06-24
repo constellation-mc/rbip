@@ -1,9 +1,9 @@
 [libraries]
 fabric-loader = { group = "net.fabricmc", name = "fabric-loader", version = "0.19.2" }
-fabric-api = { group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.141.4+1.21.11" }
+fabric-api = { group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.150.0+26.1.2" }
 
 [plugins]
-fabric-loom = { id = "fabric-loom", version = "1.16.1" }
+fabric-loom = { id = "net.fabricmc.fabric-loom", version = "1.16.1" }
 lombok = { id = "io.freefair.lombok", version = "9.4.0"}
 spotless = { id = "com.diffplug.spotless", version = "8.4.0" }
 modmuss50-publish = { id = "me.modmuss50.mod-publish-plugin", version = "1.1.0" }

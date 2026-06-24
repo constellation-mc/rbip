@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
@@ -118,13 +118,13 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookPage;render(Lnet/minecraft/client/gui/GuiGraphics;IIIIF)V",
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookPage;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIIF)V",
               shift = At.Shift.AFTER),
-      method = "render")
+      method = "extractRenderState")
   private void dark_matter$render(
-      GuiGraphics context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-    this.rbip$prevPageButton.render(context, mouseX, mouseY, delta);
-    this.rbip$nextPageButton.render(context, mouseX, mouseY, delta);
+      GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+    this.rbip$prevPageButton.extractRenderState(graphics, mouseX, mouseY, delta);
+    this.rbip$nextPageButton.extractRenderState(graphics, mouseX, mouseY, delta);
   }
 
   @Inject(at = @At("HEAD"), method = "mouseClicked", cancellable = true)
@@ -284,7 +284,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
               value = "INVOKE",
               target =
                   "Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;equals(Ljava/lang/Object;)Z"),
-      method = "method_2582")
+      method = "lambda$initVisuals$3")
   private boolean checkTabInEquals(
       ExtendedRecipeBookCategory instance,
       Object o,
@@ -330,10 +330,11 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/screens/recipebook/GhostSlots;renderTooltip(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/Minecraft;IILnet/minecraft/world/inventory/Slot;)V",
+                  "Lnet/minecraft/client/gui/screens/recipebook/GhostSlots;extractTooltip(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/Minecraft;IILnet/minecraft/world/inventory/Slot;)V",
               shift = At.Shift.AFTER),
-      method = "renderTooltip")
-  private void rbip$renderTooltip(GuiGraphics context, int i, int j, Slot slot, CallbackInfo ci) {
+      method = "extractTooltip")
+  private void rbip$renderTooltip(
+      GuiGraphicsExtractor context, int i, int j, Slot slot, CallbackInfo ci) {
     if (minecraft.screen == null) return;
     if (this.menu.getRecipeBookType() != RecipeBookType.CRAFTING) return;
 

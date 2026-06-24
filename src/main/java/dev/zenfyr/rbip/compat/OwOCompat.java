@@ -6,7 +6,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
 import net.minecraft.world.item.CreativeModeTab;
 
@@ -18,7 +18,7 @@ public class OwOCompat {
 
   @SneakyThrows
   public static boolean render(
-      GuiGraphics context, int i, RecipeBookTabButton widget, CreativeModeTab group) {
+      GuiGraphicsExtractor context, int i, RecipeBookTabButton widget, CreativeModeTab group) {
     if (groupClass == null || iconHandle == null || renderHandle == null) return false;
     if (!groupClass.isInstance(group)) return false;
 
@@ -52,7 +52,7 @@ public class OwOCompat {
           "render",
           MethodType.methodType(
               void.class,
-              GuiGraphics.class,
+              GuiGraphicsExtractor.class,
               int.class,
               int.class,
               int.class,

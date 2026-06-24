@@ -7,7 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Optional;
 import lombok.SneakyThrows;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
 import net.minecraft.world.item.CreativeModeTab;
 
@@ -18,7 +18,7 @@ public class PulsarCompat {
 
   @SneakyThrows
   public static boolean render(
-      GuiGraphics context, int i, RecipeBookTabButton widget, CreativeModeTab group) {
+      GuiGraphicsExtractor context, int i, RecipeBookTabButton widget, CreativeModeTab group) {
     if (getIconAnimation == null || animateIcon == null) return false;
     Optional<?> opt = (Optional<?>) getIconAnimation.invoke(group);
     if (opt.isEmpty()) return false;
@@ -44,11 +44,11 @@ public class PulsarCompat {
           MethodType.methodType(Optional.class, CreativeModeTab.class));
       animateIcon = lookup.findVirtual(
           iconClass,
-          "animateIcon",
+          "extractAnimation",
           MethodType.methodType(
               void.class,
               CreativeModeTab.class,
-              GuiGraphics.class,
+              GuiGraphicsExtractor.class,
               int.class,
               int.class,
               boolean.class,

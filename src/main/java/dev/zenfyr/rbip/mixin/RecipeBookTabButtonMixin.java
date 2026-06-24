@@ -10,7 +10,7 @@ import dev.zenfyr.rbip.compat.OwOCompat;
 import dev.zenfyr.rbip.compat.PulsarCompat;
 import java.util.List;
 import net.minecraft.client.ClientRecipeBook;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
@@ -90,8 +90,8 @@ public abstract class RecipeBookTabButtonMixin extends ImageButton
     return original;
   }
 
-  @Inject(at = @At("HEAD"), method = "renderIcon", cancellable = true)
-  private void rbip$render(GuiGraphics context, CallbackInfo ci) {
+  @Inject(at = @At("HEAD"), method = "extractIcon", cancellable = true)
+  private void rbip$render(GuiGraphicsExtractor context, CallbackInfo ci) {
     if (this.rbip$creativeTab == null) return;
 
     int i = this.selected ? -2 : 0;
@@ -111,7 +111,7 @@ public abstract class RecipeBookTabButtonMixin extends ImageButton
     }
 
     ItemStack icon = this.rbip$creativeTab.getIconItem();
-    if (!icon.isEmpty()) context.renderFakeItem(icon, this.getX() + 9 + i, this.getY() + 5);
+    if (!icon.isEmpty()) context.fakeItem(icon, this.getX() + 9 + i, this.getY() + 5);
     ci.cancel();
   }
 }

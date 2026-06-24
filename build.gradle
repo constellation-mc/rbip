@@ -36,9 +36,8 @@ repositories {
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation libs.fabric.loader
-    modImplementation libs.fabric.api
+    implementation libs.fabric.loader
+    implementation libs.fabric.api
 }
 
 spotless {
@@ -69,7 +68,7 @@ processResources {
     }
 }
 
-def targetJavaVersion = 21
+def targetJavaVersion = 25
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly
@@ -126,8 +125,8 @@ publishing {
 }
 
 publishMods {
-    file = remapJar.archiveFile
-    additionalFiles.from(remapSourcesJar.archiveFile)
+    file = jar.archiveFile
+    additionalFiles.from(sourcesJar.archiveFile)
 
     changelog = file("CHANGELOG.md").text
     type = ReleaseType.valueOf(providers.environmentVariable("VERSION_TYPE").getOrElse("BETA"))
