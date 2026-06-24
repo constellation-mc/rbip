@@ -30,11 +30,11 @@ public class ClientRecipeBookMixin implements ClientRecipeBookDuck {
   @Shadow
   private List<RecipeCollection> allCollections;
 
-  @Unique private final Map<RecipeBookComponent.TabInfo, CreativeModeTab> rbip$tabInfoMap =
-      new LinkedHashMap<>();
+  @Unique private Map<RecipeBookComponent.TabInfo, CreativeModeTab> rbip$tabInfoMap;
 
-  @Unique private final Map<CreativeModeTab, List<RecipeCollection>> rbip$groupedCollections =
-      new HashMap<>();
+  @Unique private Map<CreativeModeTab, List<RecipeCollection>> rbip$groupedCollections;
+
+  @Unique private List<RecipeBookComponent.TabInfo> rbip$sortedInfos;
 
   @Inject(at = @At("TAIL"), method = "rebuildCollections")
   private void rbip$reload(CallbackInfo ci) {
@@ -55,15 +55,16 @@ public class ClientRecipeBookMixin implements ClientRecipeBookDuck {
           }
         });
 
-    Map<RecipeBookComponent.TabInfo, CreativeModeTab> tabInfoMap = new LinkedHashMap<>();
+    List<RecipeBookComponent.TabInfo> sorted = new ArrayList<>();
+    Map<RecipeBookComponent.TabInfo, CreativeModeTab> tabInfoMap = new IdentityHashMap<>();
 
     BuiltInRegistries.CREATIVE_MODE_TAB.stream()
         .filter(itemGroup -> !itemGroup.isAlignedRight())
         .forEach(itemGroup -> {
-          tabInfoMap.put(
-              new RecipeBookComponent.TabInfo(
-                  itemGroup.getIconItem(), Optional.empty(), RecipeBookCategories.CRAFTING_MISC),
-              itemGroup);
+          var info = new RecipeBookComponent.TabInfo(
+              itemGroup.getIconItem(), Optional.empty(), RecipeBookCategories.CRAFTING_MISC);
+          sorted.add(info);
+          tabInfoMap.put(info, itemGroup);
         });
 
     Map<CreativeModeTab, List<RecipeCollection>> collectionsByTab = new HashMap<>();
@@ -83,11 +84,9 @@ public class ClientRecipeBookMixin implements ClientRecipeBookDuck {
       }
     });
 
-    this.rbip$groupedCollections.clear();
-    this.rbip$tabInfoMap.clear();
-
-    this.rbip$groupedCollections.putAll(collectionsByTab);
-    this.rbip$tabInfoMap.putAll(tabInfoMap);
+    this.rbip$groupedCollections = collectionsByTab;
+    this.rbip$tabInfoMap = tabInfoMap;
+    this.rbip$sortedInfos = sorted;
   }
 
   @Override
@@ -97,7 +96,7 @@ public class ClientRecipeBookMixin implements ClientRecipeBookDuck {
 
   @Override
   public Collection<RecipeBookComponent.TabInfo> rbip$allInfos() {
-    return this.rbip$tabInfoMap.keySet();
+    return this.rbip$sortedInfos;
   }
 
   @Override
