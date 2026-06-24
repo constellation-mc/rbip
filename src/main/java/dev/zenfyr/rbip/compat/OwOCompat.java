@@ -37,7 +37,7 @@ public class OwOCompat {
         widget.getY() + 5,
         (int) e,
         (int) f,
-        client.getDeltaFrameTime());
+        client.getDeltaTracker().getGameTimeDeltaTicks());
     return true;
   }
 

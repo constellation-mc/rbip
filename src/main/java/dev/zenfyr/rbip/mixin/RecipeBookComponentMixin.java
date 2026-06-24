@@ -6,26 +6,32 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import dev.zenfyr.rbip.RecipeBookPageButton;
 import dev.zenfyr.rbip.access.ClientRecipeBookDuck;
 import dev.zenfyr.rbip.access.PaginatedRecipeBookTabButton;
 import dev.zenfyr.rbip.access.RecipeBookComponentWidget;
 import dev.zenfyr.rbip.access.RecipeBookTabButtonDuck;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.client.gui.screens.recipebook.SearchRecipeBookCategory;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.inventory.RecipeBookType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.crafting.ExtendedRecipeBookCategory;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,7 +54,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
   private List<RecipeBookTabButton> tabButtons;
 
   @Shadow
-  protected RecipeBookMenu<?> menu;
+  protected RecipeBookMenu menu;
 
   @Shadow
   private int width;
@@ -76,6 +82,13 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
   @Shadow
   private ClientRecipeBook book;
 
+  @Shadow
+  @Final
+  private List<RecipeBookComponent.TabInfo> tabInfos;
+
+  @Shadow
+  protected abstract void onTabButtonPress(Button button);
+
   @Unique private int rbip$page = 0;
 
   @Unique private int rbip$pages;
@@ -88,8 +101,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
       at =
           @At(
               value = "INVOKE",
-              target =
-                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookTabButton;setStateTriggered(Z)V",
+              target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookTabButton;select()V",
               shift = At.Shift.BEFORE),
       method = "initVisuals")
   private void dark_matter$reset(CallbackInfo ci) {
@@ -105,8 +117,9 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
       at =
           @At(
               value = "INVOKE",
-              target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V",
-              shift = At.Shift.BEFORE),
+              target =
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookPage;render(Lnet/minecraft/client/gui/GuiGraphics;IIIIF)V",
+              shift = At.Shift.AFTER),
       method = "render")
   private void dark_matter$render(
       GuiGraphics context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
@@ -116,13 +129,13 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
 
   @Inject(at = @At("HEAD"), method = "mouseClicked", cancellable = true)
   private void dark_matter$mouseClicked(
-      double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+      MouseButtonEvent mouseButtonEvent, boolean bl, CallbackInfoReturnable<Boolean> cir) {
     if (this.minecraft.player != null)
       if (this.isVisible() && !this.minecraft.player.isSpectator()) {
-        if (this.rbip$nextPageButton.mouseClicked(mouseX, mouseY, button)) {
+        if (this.rbip$nextPageButton.mouseClicked(mouseButtonEvent, bl)) {
           this.rbip$incrementPage();
           cir.setReturnValue(true);
-        } else if (this.rbip$prevPageButton.mouseClicked(mouseX, mouseY, button)) {
+        } else if (this.rbip$prevPageButton.mouseClicked(mouseButtonEvent, bl)) {
           this.rbip$decrementPage();
           cir.setReturnValue(true);
         }
@@ -130,28 +143,14 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
   }
 
   @Inject(at = @At("TAIL"), method = "updateCollections")
-  private void dark_matter$refreshResults(boolean resetCurrentPage, CallbackInfo ci) {
+  private void dark_matter$refreshResults(
+      boolean resetCurrentPage, boolean isFiltering, CallbackInfo ci) {
     if (resetCurrentPage && this.selectedTab != null) {
       if (this.rbip$getPage() != ((PaginatedRecipeBookTabButton) this.selectedTab).rbip$getPage()) {
         this.rbip$setPage(
             Math.max(((PaginatedRecipeBookTabButton) this.selectedTab).rbip$getPage(), 0));
       }
     }
-  }
-
-  @ModifyExpressionValue(
-      at =
-          @At(
-              value = "FIELD",
-              target =
-                  "Lnet/minecraft/client/RecipeBookCategories;CRAFTING_SEARCH:Lnet/minecraft/client/RecipeBookCategories;"),
-      method = "updateTabs",
-      require = 0)
-  private RecipeBookCategories dark_matter$refresh$correctGroup(
-      RecipeBookCategories group, @Local RecipeBookTabButton widget) {
-    return RecipeBookCategories.AGGREGATE_CATEGORIES.containsKey(widget.getCategory())
-        ? widget.getCategory()
-        : group;
   }
 
   @ModifyArg(
@@ -249,34 +248,45 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
   //
 
   @Inject(
+      at = @At("CTOR_HEAD"),
+      method = "<init>(Lnet/minecraft/world/inventory/RecipeBookMenu;Ljava/util/List;)V")
+  private void init(
+      RecipeBookMenu recipeBookMenu,
+      List<RecipeBookComponent.TabInfo> _l,
+      CallbackInfo ci,
+      @Local(argsOnly = true) LocalRef<List<RecipeBookComponent.TabInfo>> list) {
+    if (recipeBookMenu.getRecipeBookType() == RecipeBookType.CRAFTING) {
+      var minecraft = Minecraft.getInstance();
+      List<RecipeBookComponent.TabInfo> tabInfos1 = new ArrayList<>();
+      tabInfos1.add(new RecipeBookComponent.TabInfo(SearchRecipeBookCategory.CRAFTING));
+      tabInfos1.addAll(((ClientRecipeBookDuck) minecraft.player.getRecipeBook()).rbip$allInfos());
+      list.set(tabInfos1);
+    }
+  }
+
+  @Inject(
       at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER),
       method = "initVisuals")
   private void init(CallbackInfo ci) {
     if (this.menu.getRecipeBookType() != RecipeBookType.CRAFTING) return;
 
-    var search = RecipeBookCategories.getCategories(this.menu.getRecipeBookType()).stream()
-        .filter(RecipeBookCategories.AGGREGATE_CATEGORIES::containsKey)
-        .findFirst();
-    search.ifPresent(
-        recipeBookGroup -> this.tabButtons.add(new RecipeBookTabButton(recipeBookGroup)));
-
-    BuiltInRegistries.CREATIVE_MODE_TAB.stream()
-        .filter(itemGroup -> !itemGroup.isAlignedRight())
-        .forEach(itemGroup -> {
-          var widget = new RecipeBookTabButton(RecipeBookCategories.CRAFTING_MISC);
-          ((RecipeBookTabButtonDuck) widget).rbip$setCreativeTab(itemGroup);
-          this.tabButtons.add(widget);
-        });
+    for (RecipeBookComponent.TabInfo tabInfo : this.tabInfos) {
+      var button = new RecipeBookTabButton(0, 0, tabInfo, this::onTabButtonPress);
+      var tab = ((ClientRecipeBookDuck) minecraft.player.getRecipeBook()).rbip$tabForInfo(tabInfo);
+      ((RecipeBookTabButtonDuck) button).rbip$setCreativeTab(tab);
+      this.tabButtons.add(button);
+    }
   }
 
   @WrapOperation(
       at =
           @At(
               value = "INVOKE",
-              target = "Lnet/minecraft/client/RecipeBookCategories;equals(Ljava/lang/Object;)Z"),
+              target =
+                  "Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;equals(Ljava/lang/Object;)Z"),
       method = "method_2582")
   private boolean checkTabInEquals(
-      RecipeBookCategories instance,
+      ExtendedRecipeBookCategory instance,
       Object o,
       Operation<Boolean> original,
       @Local(argsOnly = true) RecipeBookTabButton widget) {
@@ -292,9 +302,9 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
   @ModifyExpressionValue(
       at =
           @At(
-              value = "INVOKE",
+              value = "FIELD",
               target =
-                  "Lnet/minecraft/client/RecipeBookCategories;getCategories(Lnet/minecraft/world/inventory/RecipeBookType;)Ljava/util/List;"),
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookComponent;tabInfos:Ljava/util/List;"),
       method = "initVisuals")
   private List<RecipeBookCategories> skipRealButtons(List<RecipeBookCategories> original) {
     return this.menu.getRecipeBookType() == RecipeBookType.CRAFTING ? List.of() : original;
@@ -305,7 +315,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
+                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;)Ljava/util/List;"),
       method = "updateCollections")
   private List<RecipeCollection> refreshResults(List<RecipeCollection> original) {
     var real = ((RecipeBookTabButtonDuck) this.selectedTab).rbip$getCreativeTab();
@@ -319,24 +329,24 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
       at =
           @At(
               value = "INVOKE",
-              target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V",
-              shift = At.Shift.BEFORE),
-      method = "render")
-  private void rbip$renderTooltip(
-      GuiGraphics context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+              target =
+                  "Lnet/minecraft/client/gui/screens/recipebook/GhostSlots;renderTooltip(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/Minecraft;IILnet/minecraft/world/inventory/Slot;)V",
+              shift = At.Shift.AFTER),
+      method = "renderTooltip")
+  private void rbip$renderTooltip(GuiGraphics context, int i, int j, Slot slot, CallbackInfo ci) {
     if (minecraft.screen == null) return;
     if (this.menu.getRecipeBookType() != RecipeBookType.CRAFTING) return;
 
     this.tabButtons.stream()
         .filter(widget -> widget.visible && widget.isHovered())
         .forEach(widget -> {
-          if (RecipeBookCategories.AGGREGATE_CATEGORIES.containsKey(widget.getCategory())) {
-            context.renderTooltip(
-                minecraft.font, CreativeModeTabs.searchTab().getDisplayName(), mouseX, mouseY);
+          if (widget.getCategory() instanceof SearchRecipeBookCategory) {
+            context.setTooltipForNextFrame(
+                minecraft.font, CreativeModeTabs.searchTab().getDisplayName(), i, j);
           } else {
             Optional.ofNullable(((RecipeBookTabButtonDuck) widget).rbip$getCreativeTab())
                 .map(CreativeModeTab::getDisplayName)
-                .ifPresent(text -> context.renderTooltip(minecraft.font, text, mouseX, mouseY));
+                .ifPresent(text -> context.setTooltipForNextFrame(minecraft.font, text, i, j));
           }
         });
   }

@@ -1,6 +1,7 @@
 package dev.zenfyr.rbip.compat;
 
 import dev.zenfyr.rbip.RecipeBookIsPain;
+import dev.zenfyr.rbip.mixin.RecipeBookTabButtonAccessor;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -28,7 +29,7 @@ public class PulsarCompat {
         context,
         widget.getX() + 9 + i,
         widget.getY() + 5,
-        widget.isStateTriggered(),
+        ((RecipeBookTabButtonAccessor) widget).rbip$isSelected(),
         false);
     return true;
   }

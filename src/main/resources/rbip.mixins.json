@@ -8,6 +8,7 @@
   "client": [
     "ClientRecipeBookMixin",
     "RecipeBookComponentMixin",
+    "RecipeBookTabButtonAccessor",
     "RecipeBookTabButtonMixin"
   ],
   "injectors": {

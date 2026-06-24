@@ -11,24 +11,29 @@ import dev.zenfyr.rbip.compat.PulsarCompat;
 import java.util.List;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.StateSwitchingButton;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(RecipeBookTabButton.class)
-public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton
+public abstract class RecipeBookTabButtonMixin extends ImageButton
     implements RecipeBookTabButtonDuck, PaginatedRecipeBookTabButton {
 
-  public RecipeBookTabButtonMixin(int x, int y, int width, int height, boolean toggled) {
-    super(x, y, width, height, toggled);
+  @Shadow
+  private boolean selected;
+
+  public RecipeBookTabButtonMixin(
+      int i, int j, int k, int l, WidgetSprites widgetSprites, OnPress onPress) {
+    super(i, j, k, l, widgetSprites, onPress);
   }
 
   @Unique private int rbip$page = -1;
@@ -60,7 +65,7 @@ public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
+                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;)Ljava/util/List;"),
       method = "startAnimation")
   private List<RecipeCollection> checkForNewRecipes(
       List<RecipeCollection> original, @Local ClientRecipeBook recipeBook) {
@@ -75,7 +80,7 @@ public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/client/RecipeBookCategories;)Ljava/util/List;"),
+                  "Lnet/minecraft/client/ClientRecipeBook;getCollection(Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;)Ljava/util/List;"),
       method = "updateVisibility")
   private List<RecipeCollection> hasKnownRecipes(
       List<RecipeCollection> original, @Local(argsOnly = true) ClientRecipeBook recipeBook) {
@@ -86,10 +91,10 @@ public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton
   }
 
   @Inject(at = @At("HEAD"), method = "renderIcon", cancellable = true)
-  private void rbip$render(GuiGraphics context, ItemRenderer itemRenderer, CallbackInfo ci) {
+  private void rbip$render(GuiGraphics context, CallbackInfo ci) {
     if (this.rbip$creativeTab == null) return;
 
-    int i = this.isStateTriggered ? -2 : 0;
+    int i = this.selected ? -2 : 0;
 
     if (RecipeBookIsPain.isOwOLoaded) {
       if (OwOCompat.render(context, i, (RecipeBookTabButton) (Object) this, rbip$creativeTab)) {
