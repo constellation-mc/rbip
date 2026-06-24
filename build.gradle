@@ -49,7 +49,7 @@ spotless {
     }
 }
 
-loom.mods.register(project.name) {
+loom.mods.register(project.archives_base_name) {
     sourceSet project.sourceSets.main
 }
 
@@ -105,6 +105,7 @@ sourcesJar {
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            artifactId = project.archives_base_name
             from components.java
         }
     }
