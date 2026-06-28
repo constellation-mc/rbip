@@ -8,29 +8,18 @@ plugins {
     alias libs.plugins.modmuss50.publish
 }
 
+def targetJavaVersion = Integer.parseInt(java_version)
 def local = !System.getenv().containsKey("GITHUB_RUN_NUMBER")
 
-version = "${project.mod_version}-${project.minecraft_version}-${local ? 'SNAPSHOT' : "build.${System.getenv("GITHUB_RUN_NUMBER")}"}"
+version = "${mod_version}+mc${minecraft_version}"
 group = project.maven_group
 
 base {
-    archivesName = project.archives_base_name
+    archivesName = "${project.mod_id}-${loader_id}"
 }
 
-apply from: "https://raw.githubusercontent.com/constellation-mc/artifacts/main/artifacts.groovy"
-
 repositories {
-    // Add repositories to retrieve artifacts from in here.
-    // You should only use this when depending on other mods because
-    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-    // for more information about repositories.
-    maven {
-        name = "Modrinth"
-        url = "https://api.modrinth.com/maven"
-        content { includeGroup "maven.modrinth" }
-    }
-    maven { url 'https://jitpack.io' }
+    mavenCentral()
 }
 
 dependencies {
@@ -50,16 +39,17 @@ spotless {
     }
 }
 
-loom.mods.register(project.archives_base_name) {
+loom.mods.register(mod_id) {
     sourceSet project.sourceSets.main
 }
 
 processResources {
     def map = [
-            "version"          : project.version,
-            "minecraft_version": project.minecraft_version,
-            "loader_version"   : libs.fabric.loader.get().version,
-            "fabric_version"   : libs.fabric.api.get().version
+            "version": project.version,
+            "mod_id": mod_id,
+            "minecraft_version": minecraft_version,
+            "loader_version": libs.fabric.loader.get().version,
+            "fabric_version": libs.fabric.api.get().version
     ]
     inputs.properties(map)
     filteringCharset "UTF-8"
@@ -69,7 +59,6 @@ processResources {
     }
 }
 
-def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly
@@ -91,7 +80,7 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
+        rename { "${it}_${mod_id}" }
     }
 }
 
@@ -106,7 +95,8 @@ sourcesJar {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = project.archives_base_name
+            artifactId = "${mod_id}-${loader_id}"
+            version = "${mod_version}+mc${minecraft_version}"
             from components.java
         }
     }
@@ -129,6 +119,7 @@ publishing {
 publishMods {
     file = remapJar.archiveFile
     additionalFiles.from(remapSourcesJar.archiveFile)
+    version = "${mod_version}+mc${minecraft_version}+${loader_id}"
 
     changelog = file("CHANGELOG.md").text
     type = ReleaseType.valueOf(providers.environmentVariable("VERSION_TYPE").getOrElse("BETA"))
