@@ -14,16 +14,16 @@ import net.minecraft.world.item.CreativeModeTab;
 public class PulsarCompat {
 
   private static MethodHandle getIconAnimation;
-  private static MethodHandle animateIcon;
+  private static MethodHandle renderTabIcon;
 
   @SneakyThrows
   public static boolean render(
       GuiGraphicsExtractor context, int i, RecipeBookTabButton widget, CreativeModeTab group) {
-    if (getIconAnimation == null || animateIcon == null) return false;
+    if (getIconAnimation == null || renderTabIcon == null) return false;
     Optional<?> opt = (Optional<?>) getIconAnimation.invoke(group);
     if (opt.isEmpty()) return false;
 
-    animateIcon.invoke(
+    renderTabIcon.invoke(
         opt.get(),
         group,
         context,
@@ -36,13 +36,20 @@ public class PulsarCompat {
 
   public static void init(MethodHandles.Lookup lookup) {
     try {
-      var iconClass = Class.forName("dev.zenfyr.pulsar.creativetab.CreativeModeTabAnimaton");
+      Class<?> iconClass;
+
+      try {
+        iconClass =
+            Class.forName("dev.zenfyr.pulsar.api.client.creativetab.CreativeModeTabAnimation");
+      } catch (ClassNotFoundException e) {
+        iconClass = Class.forName("dev.zenfyr.pulsar.creativetab.CreativeModeTabAnimaton");
+      }
 
       getIconAnimation = lookup.findStatic(
           iconClass,
           "getIconAnimation",
           MethodType.methodType(Optional.class, CreativeModeTab.class));
-      animateIcon = lookup.findVirtual(
+      renderTabIcon = lookup.findVirtual(
           iconClass,
           "extractAnimation",
           MethodType.methodType(
