@@ -54,7 +54,7 @@ public class RecipeBookPageButton extends Button {
           256,
           256);
 
-      if (this.isHovered && Minecraft.getInstance().screen != null) {
+      if (this.isHovered && Minecraft.getInstance().gui.screen() != null) {
         context.setTooltipForNextFrame(
             Minecraft.getInstance().font,
             Component.literal(((RecipeBookComponentWidget) widget).rbip$getPage() + 1 + "/"

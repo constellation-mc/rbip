@@ -335,7 +335,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
       method = "extractTooltip")
   private void rbip$renderTooltip(
       GuiGraphicsExtractor context, int i, int j, Slot slot, CallbackInfo ci) {
-    if (minecraft.screen == null) return;
+    if (minecraft.gui.screen() == null) return;
     if (this.menu.getRecipeBookType() != RecipeBookType.CRAFTING) return;
 
     this.tabButtons.stream()
