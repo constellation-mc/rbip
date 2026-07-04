@@ -1,7 +1,7 @@
 import me.modmuss50.mpp.ReleaseType
 
 plugins {
-    alias libs.plugins.fabric.loom
+    alias libs.plugins.neoforge.moddev
     id 'maven-publish'
     alias libs.plugins.lombok
     alias libs.plugins.spotless
@@ -19,14 +19,42 @@ base {
 }
 
 repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'ParchmentMC'
+                url = 'https://maven.parchmentmc.org'
+            }
+        }
+        filter { includeGroup('org.parchmentmc.data') }
+    }
     mavenCentral()
 }
 
+neoForge {
+    version = "${libs.neoforge.get().version}"
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+
+    runs {
+        server {
+            server()
+            gameDirectory = file("run/server")
+            loadedMods = [mods."${mod_id}"]
+        }
+        client {
+            client()
+            gameDirectory = file("run/client")
+            loadedMods = [mods."${mod_id}"]
+        }
+    }
+}
+
 dependencies {
-    // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    implementation libs.fabric.loader
-    implementation libs.fabric.api
 }
 
 spotless {
@@ -38,22 +66,17 @@ spotless {
     }
 }
 
-loom.mods.register(mod_id) {
-    sourceSet project.sourceSets.main
-}
-
 processResources {
     def map = [
             "version": project.version,
             "mod_id": mod_id,
             "minecraft_version": minecraft_version,
-            "loader_version": libs.fabric.loader.get().version,
-            "fabric_version": libs.fabric.api.get().version
+            "neoforge_version": libs.neoforge.get().version
     ]
     inputs.properties(map)
     filteringCharset "UTF-8"
 
-    filesMatching("fabric.mod.json") {
+    filesMatching(["META-INF/neoforge.mods.toml"]) {
         expand map
     }
 }
@@ -122,7 +145,7 @@ publishMods {
 
     changelog = file("CHANGELOG.md").text
     type = ReleaseType.valueOf(providers.environmentVariable("VERSION_TYPE").getOrElse("BETA"))
-    modLoaders.add("fabric")
+    modLoaders.add(loader_id)
 
     displayName = "${project.mod_version} (${project.minecraft_version})"
 
@@ -130,20 +153,16 @@ publishMods {
         projectId = "etNS9OnA"
         accessToken = providers.environmentVariable("MODRINTH_TOKEN")
         minecraftVersions.add("${project.minecraft_version}")
-
-        requires("fabric-api")
     }
     curseforge {
         projectId = "643246"
         accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
         minecraftVersions.add("${project.minecraft_version}")
-
-        requires("fabric-api")
     }
     github {
         repository = "constellation-mc/rbip"
         accessToken = providers.environmentVariable("GITHUB_TOKEN")
-        commitish = providers.environmentVariable("GITHUB_SHA").getOrElse("${project.minecraft_version}-fabric")
+        commitish = providers.environmentVariable("GITHUB_SHA").getOrElse("${project.minecraft_version}-${loader_id}")
 
         type = STABLE
     }

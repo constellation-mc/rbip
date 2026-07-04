@@ -3,23 +3,26 @@ package dev.zenfyr.rbip;
 import dev.zenfyr.rbip.compat.OwOCompat;
 import dev.zenfyr.rbip.compat.PulsarCompat;
 import java.lang.invoke.MethodHandles;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Environment(EnvType.CLIENT)
-public class RecipeBookIsPain implements ClientModInitializer {
+@Mod("rbip")
+public class RecipeBookIsPain {
 
   public static final Logger LOGGER = LogManager.getLogger("RBIP");
 
-  public static final boolean isOwOLoaded = FabricLoader.getInstance().isModLoaded("owo");
-  public static final boolean isPulsarLoaded = FabricLoader.getInstance().isModLoaded("pulsar");
+  public static final boolean isOwOLoaded = ModList.get().isLoaded("owo");
+  public static final boolean isPulsarLoaded = ModList.get().isLoaded("pulsar");
 
-  @Override
-  public void onInitializeClient() {
+  public RecipeBookIsPain(IEventBus bus) {
+    bus.addListener(this::onInitializeClient);
+  }
+
+  public void onInitializeClient(FMLClientSetupEvent event) {
     var lookup = MethodHandles.lookup();
 
     if (isOwOLoaded) {
