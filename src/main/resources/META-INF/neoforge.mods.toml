@@ -13,16 +13,19 @@ authors = "zenfyr"
 description = '''Makes the recipe book use creative tabs for groups'''
 displayTest = "IGNORE_ALL_VERSION"
 
+[[mixins]]
+config = "rbip.mixins.json"
+
 [[dependencies.rbip]]
-modId = "forge"
-mandatory = true
-versionRange = "[${forge_version},)"
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.rbip]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "[${minecraft_version},]"
 ordering = "NONE"
 side = "BOTH"

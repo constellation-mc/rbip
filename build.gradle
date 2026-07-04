@@ -1,7 +1,7 @@
 import me.modmuss50.mpp.ReleaseType
 
 plugins {
-    alias libs.plugins.neoforge.legacyforge
+    alias libs.plugins.neoforge.moddev
     id 'maven-publish'
     alias libs.plugins.lombok
     alias libs.plugins.spotless
@@ -31,14 +31,8 @@ repositories {
     mavenCentral()
 }
 
-mixin {
-    add(sourceSets.main, "${mod_id}.refmap.json")
-
-    config("${mod_id}.mixins.json")
-}
-
-legacyForge {
-    version = "${minecraft_version}-${libs.forge.get().version}"
+neoForge {
+    version = "${libs.neoforge.get().version}"
 
     mods {
         "${mod_id}" {
@@ -61,13 +55,6 @@ legacyForge {
 }
 
 dependencies {
-    var mixin = libs.mixin.asProvider().get()
-    annotationProcessor("${mixin.group}:${mixin.name}:${mixin.version}:processor")
-
-    annotationProcessor(libs.mixin.extras.common)
-    compileOnly(libs.mixin.extras.common)
-    jarJar(libs.mixin.extras.forge)
-    implementation(libs.mixin.extras.forge)
 }
 
 spotless {
@@ -84,12 +71,12 @@ processResources {
             "version": project.version,
             "mod_id": mod_id,
             "minecraft_version": minecraft_version,
-            "forge_version": libs.forge.get().version
+            "neoforge_version": libs.neoforge.get().version
     ]
     inputs.properties(map)
     filteringCharset "UTF-8"
 
-    filesMatching(["META-INF/mods.toml"]) {
+    filesMatching(["META-INF/neoforge.mods.toml"]) {
         expand map
     }
 }

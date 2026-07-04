@@ -1,14 +1,8 @@
-[versions]
-mixin-extras = "0.5.4"
-
 [libraries]
-mixin = { group = "org.spongepowered", name = "mixin", version = "0.8.5" }
-mixin-extras-common = { group = "io.github.llamalad7", name = "mixinextras-common", version.ref = "mixin-extras" }
-mixin-extras-forge = { group = "io.github.llamalad7", name = "mixinextras-forge", version.ref = "mixin-extras" }
-forge = { group = "net.minecraftforge", name = "forge", version = "47.4.10" }
+neoforge = { group = "net.neoforged", name = "neoforge", version = "21.11.42" }
 
 [plugins]
-neoforge-legacyforge = { id = "net.neoforged.moddev.legacyforge", version = "2.0.141" }
+neoforge-moddev = { id = "net.neoforged.moddev", version = "2.0.141" }
 lombok = { id = "io.freefair.lombok", version = "9.4.0"}
 spotless = { id = "com.diffplug.spotless", version = "8.4.0" }
 modmuss50-publish = { id = "me.modmuss50.mod-publish-plugin", version = "1.1.0" }

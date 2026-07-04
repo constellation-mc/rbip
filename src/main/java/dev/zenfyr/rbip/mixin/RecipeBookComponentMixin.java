@@ -33,6 +33,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.crafting.ExtendedRecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeBookCategories;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -258,7 +259,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
               value = "INVOKE",
               target =
                   "Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;equals(Ljava/lang/Object;)Z"),
-      method = "lambda$initVisuals$0")
+      method = "lambda$initVisuals$4")
   private boolean checkTabInEquals(
       ExtendedRecipeBookCategory instance,
       Object o,
@@ -278,7 +279,8 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "FIELD",
               target =
-                  "Lnet/minecraft/world/inventory/RecipeBookMenu;getRecipeBookCategories()Ljava/util/List;"),
+                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookComponent;tabInfos:Ljava/util/List;",
+              opcode = Opcodes.GETFIELD),
       method = "initVisuals")
   private List<RecipeBookCategories> skipRealButtons(List<RecipeBookCategories> original) {
     return this.menu.getRecipeBookType() == RecipeBookType.CRAFTING ? List.of() : original;

@@ -3,10 +3,10 @@ package dev.zenfyr.rbip;
 import dev.zenfyr.rbip.compat.OwOCompat;
 import dev.zenfyr.rbip.compat.PulsarCompat;
 import java.lang.invoke.MethodHandles;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,8 +18,8 @@ public class RecipeBookIsPain {
   public static final boolean isOwOLoaded = ModList.get().isLoaded("owo");
   public static final boolean isPulsarLoaded = ModList.get().isLoaded("pulsar");
 
-  public RecipeBookIsPain(FMLJavaModLoadingContext context) {
-    context.getModEventBus().addListener(this::onInitializeClient);
+  public RecipeBookIsPain(IEventBus bus) {
+    bus.addListener(this::onInitializeClient);
   }
 
   public void onInitializeClient(FMLClientSetupEvent event) {
