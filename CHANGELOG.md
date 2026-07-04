@@ -1,4 +1,3 @@
 ### What's new:
 
-* Rewrite of the mod to remove enum extension.
-* Removed Dark Matter dependency, added Fabric API dependency for resource loading.
+* (Neo)Forge port. this could be a one-time offer, we'll see.
