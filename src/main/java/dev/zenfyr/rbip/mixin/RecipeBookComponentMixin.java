@@ -33,7 +33,6 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.crafting.ExtendedRecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeBookCategories;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -86,10 +85,10 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/world/inventory/RecipeBookMenu;fillCraftSlotsStackedContents(Lnet/minecraft/world/entity/player/StackedContents;)V"),
+                  "Lnet/minecraft/world/inventory/RecipeBookMenu;fillCraftSlotsStackedContents(Lnet/minecraft/world/entity/player/StackedItemContents;)V"),
       method = "initVisuals")
   private void dark_matter$reset(
-      CallbackInfo ci, @Local(index = 1) int xo, @Local(index = 2) int yo) {
+      CallbackInfo ci, @Local(index = 2) int xo, @Local(index = 3) int yo) {
     this.rbip$nextPageButton =
         new RecipeBookPageButton(xo + 18, yo - 13, (RecipeBookComponent) (Object) this, true);
     this.rbip$prevPageButton =
