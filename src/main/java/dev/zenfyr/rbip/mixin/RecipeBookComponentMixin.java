@@ -258,7 +258,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
               value = "INVOKE",
               target =
                   "Lnet/minecraft/world/item/crafting/ExtendedRecipeBookCategory;equals(Ljava/lang/Object;)Z"),
-      method = "method_2582")
+      method = "lambda$initVisuals$0")
   private boolean checkTabInEquals(
       ExtendedRecipeBookCategory instance,
       Object o,
@@ -278,7 +278,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "FIELD",
               target =
-                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookComponent;tabInfos:Ljava/util/List;"),
+                  "Lnet/minecraft/world/inventory/RecipeBookMenu;getRecipeBookCategories()Ljava/util/List;"),
       method = "initVisuals")
   private List<RecipeBookCategories> skipRealButtons(List<RecipeBookCategories> original) {
     return this.menu.getRecipeBookType() == RecipeBookType.CRAFTING ? List.of() : original;
