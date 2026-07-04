@@ -248,7 +248,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target = "Lnet/minecraft/client/RecipeBookCategories;equals(Ljava/lang/Object;)Z"),
-      method = "method_2582")
+      method = "lambda$initVisuals$0")
   private boolean checkTabInEquals(
       RecipeBookCategories instance,
       Object o,
@@ -268,7 +268,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/RecipeBookCategories;getCategories(Lnet/minecraft/world/inventory/RecipeBookType;)Ljava/util/List;"),
+                  "Lnet/minecraft/world/inventory/RecipeBookMenu;getRecipeBookCategories()Ljava/util/List;"),
       method = "initVisuals")
   private List<RecipeBookCategories> skipRealButtons(List<RecipeBookCategories> original) {
     return this.menu.getRecipeBookType() == RecipeBookType.CRAFTING ? List.of() : original;

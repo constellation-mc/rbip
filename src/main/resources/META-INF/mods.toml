@@ -1,0 +1,28 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/constellation-mc/rbip/issues"
+clientSideOnly = true
+
+[[mods]]
+modId = "rbip"
+version = "${version}"
+displayName = "Recipe Book Is Pain"
+logoFile = "assets/rbip/icon.png"
+authors = "zenfyr"
+description = '''Makes the recipe book use creative tabs for groups'''
+displayTest = "IGNORE_ALL_VERSION"
+
+[[dependencies.rbip]]
+modId = "forge"
+mandatory = true
+versionRange = "[${forge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.rbip]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${minecraft_version},]"
+ordering = "NONE"
+side = "BOTH"
