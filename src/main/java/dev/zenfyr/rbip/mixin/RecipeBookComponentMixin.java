@@ -27,6 +27,7 @@ import net.minecraft.world.inventory.RecipeBookType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -51,24 +52,7 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
   protected RecipeBookMenu<?> menu;
 
   @Shadow
-  private int width;
-
-  @Shadow
-  private int height;
-
-  @Shadow
-  private int xOffset;
-
-  @Shadow
   public abstract boolean isVisible();
-
-  @Shadow
-  @Final
-  public static int IMAGE_WIDTH;
-
-  @Shadow
-  @Final
-  public static int IMAGE_HEIGHT;
 
   @Shadow
   @Nullable private RecipeBookTabButton selectedTab;
@@ -89,16 +73,14 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookTabButton;setStateTriggered(Z)V",
-              shift = At.Shift.BEFORE),
+                  "Lnet/minecraft/world/inventory/RecipeBookMenu;fillCraftSlotsStackedContents(Lnet/minecraft/world/entity/player/StackedContents;)V"),
       method = "initVisuals")
-  private void dark_matter$reset(CallbackInfo ci) {
-    int a = (this.width - rbip$horizontalOffset()) / 2 - this.xOffset;
-    int s = (this.height - rbip$verticalOffset()) / 2;
+  private void dark_matter$reset(
+      CallbackInfo ci, @Local(index = 1) int xo, @Local(index = 2) int yo) {
     this.rbip$nextPageButton =
-        new RecipeBookPageButton(a + 18, s - 13, (RecipeBookComponent) (Object) this, true);
+        new RecipeBookPageButton(xo + 18, yo - 13, (RecipeBookComponent) (Object) this, true);
     this.rbip$prevPageButton =
-        new RecipeBookPageButton(a + 3, s - 13, (RecipeBookComponent) (Object) this, false);
+        new RecipeBookPageButton(xo + 3, yo - 13, (RecipeBookComponent) (Object) this, false);
   }
 
   @Inject(
@@ -144,9 +126,9 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "FIELD",
               target =
-                  "Lnet/minecraft/client/RecipeBookCategories;CRAFTING_SEARCH:Lnet/minecraft/client/RecipeBookCategories;"),
-      method = "updateTabs",
-      require = 0)
+                  "Lnet/minecraft/client/RecipeBookCategories;CRAFTING_SEARCH:Lnet/minecraft/client/RecipeBookCategories;",
+              opcode = Opcodes.GETSTATIC),
+      method = "updateTabs")
   private RecipeBookCategories dark_matter$refresh$correctGroup(
       RecipeBookCategories group, @Local RecipeBookTabButton widget) {
     return RecipeBookCategories.AGGREGATE_CATEGORIES.containsKey(widget.getCategory())
@@ -195,14 +177,6 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
     this.rbip$pages = (int) Math.ceil(wc.get() / 6f);
     this.rbip$updatePages();
     this.rbip$updatePageSwitchButtons();
-  }
-
-  @Unique private static int rbip$horizontalOffset() {
-    return IMAGE_WIDTH;
-  }
-
-  @Unique private static int rbip$verticalOffset() {
-    return IMAGE_HEIGHT;
   }
 
   @Unique @Override
