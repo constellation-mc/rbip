@@ -1,5 +1,5 @@
 [libraries]
-neoforge = { group = "net.neoforged", name = "neoforge", version = "21.11.42" }
+neoforge = { group = "net.neoforged", name = "neoforge", version = "26.1.2.76" }
 
 [plugins]
 neoforge-moddev = { id = "net.neoforged.moddev", version = "2.0.141" }
