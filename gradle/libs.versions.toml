@@ -6,4 +6,4 @@ fabric-api = { group = "net.fabricmc.fabric-api", name = "fabric-api", version =
 fabric-loom = { id = "net.fabricmc.fabric-loom", version = "1.16.1" }
 lombok = { id = "io.freefair.lombok", version = "9.4.0"}
 spotless = { id = "com.diffplug.spotless", version = "8.4.0" }
-modmuss50-publish = { id = "me.modmuss50.mod-publish-plugin", version = "1.1.0" }
+modmuss50-publish = { id = "me.modmuss50.mod-publish-plugin", version = "2.1.1" }
