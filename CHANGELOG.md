@@ -1,3 +1,3 @@
 ### What's new:
 
-* (Neo)Forge port. this could be a one-time offer, we'll see.
+* Fix mixins not applying in production. (aka. the mod now works)
