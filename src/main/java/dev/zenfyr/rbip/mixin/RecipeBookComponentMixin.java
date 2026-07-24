@@ -248,7 +248,8 @@ public abstract class RecipeBookComponentMixin implements RecipeBookComponentWid
           @At(
               value = "INVOKE",
               target = "Lnet/minecraft/client/RecipeBookCategories;equals(Ljava/lang/Object;)Z"),
-      method = "lambda$initVisuals$0")
+      method = {"lambda$initVisuals$0", "m_100328_"},
+      remap = false)
   private boolean checkTabInEquals(
       RecipeBookCategories instance,
       Object o,

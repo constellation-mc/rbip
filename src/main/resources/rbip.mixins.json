@@ -10,6 +10,7 @@
     "RecipeBookComponentMixin",
     "RecipeBookTabButtonMixin"
   ],
+  "refmap": "rbip.refmap.json",
   "injectors": {
     "defaultRequire": 1
   }
