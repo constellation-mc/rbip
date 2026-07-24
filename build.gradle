@@ -110,7 +110,6 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-    withSourcesJar()
 }
 
 jar {
@@ -123,13 +122,6 @@ jar {
     ])
 }
 
-sourcesJar {
-    exclude {
-        sourceSets.main.allSource.contains it.file
-    }
-    from delombok
-}
-
 // configure the maven publication
 publishing {
     publications {
@@ -139,25 +131,10 @@ publishing {
             from components.java
         }
     }
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    if (!local) {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = "https://maven.pkg.github.com/constellation-mc/rbip"
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
-            }
-        }
-    }
 }
 
 publishMods {
     file = jar.archiveFile
-    additionalFiles.from(sourcesJar.archiveFile)
     version = "${mod_version}+mc${minecraft_version}+${loader_id}"
 
     changelog = file("CHANGELOG.md").text
@@ -170,11 +147,14 @@ publishMods {
         projectId = "etNS9OnA"
         accessToken = providers.environmentVariable("MODRINTH_TOKEN")
         minecraftVersions.add("${project.minecraft_version}")
+        environment = CLIENT_ONLY
     }
     curseforge {
         projectId = "643246"
         accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
         minecraftVersions.add("${project.minecraft_version}")
+        client = true
+        server = false
     }
     github {
         repository = "constellation-mc/rbip"
