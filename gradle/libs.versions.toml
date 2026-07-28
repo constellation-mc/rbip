@@ -1,6 +1,6 @@
 [libraries]
 fabric-loader = { group = "net.fabricmc", name = "fabric-loader", version = "0.19.2" }
-fabric-api = { group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.92.8+1.20.1" }
+fabric-api = { group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.141.6+" }
 
 [plugins]
 fabric-loom = { id = "fabric-loom", version = "1.16.1" }
